@@ -286,4 +286,3 @@ resource "helm_release" "falcon_platform" {
     kubectl_manifest.crowdstrike_pull_secret_iar
   ]
 }
-ENDOFFILE
