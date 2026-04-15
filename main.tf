@@ -70,6 +70,78 @@ resource "kubectl_manifest" "falcon_image_analyzer_namespace" {
   YAML
 }
 
+# Create image pull secret for falcon-system
+resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
+  yaml_body = <<-YAML
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: crowdstrike-pull-secret
+      namespace: falcon-system
+    type: kubernetes.io/dockerconfigjson
+    data:
+      .dockerconfigjson: ${base64encode(jsonencode({
+        auths = {
+          "registry.crowdstrike.com" = {
+            username = var.falcon_client_id
+            password = var.falcon_client_secret
+            auth     = base64encode("${var.falcon_client_id}:${var.falcon_client_secret}")
+          }
+        }
+      }))}
+  YAML
+
+  depends_on = [kubectl_manifest.falcon_system_namespace]
+}
+
+# Create image pull secret for falcon-kac
+resource "kubectl_manifest" "crowdstrike_pull_secret_kac" {
+  yaml_body = <<-YAML
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: crowdstrike-pull-secret
+      namespace: falcon-kac
+    type: kubernetes.io/dockerconfigjson
+    data:
+      .dockerconfigjson: ${base64encode(jsonencode({
+        auths = {
+          "registry.crowdstrike.com" = {
+            username = var.falcon_client_id
+            password = var.falcon_client_secret
+            auth     = base64encode("${var.falcon_client_id}:${var.falcon_client_secret}")
+          }
+        }
+      }))}
+  YAML
+
+  depends_on = [kubectl_manifest.falcon_kac_namespace]
+}
+
+# Create image pull secret for falcon-image-analyzer
+resource "kubectl_manifest" "crowdstrike_pull_secret_iar" {
+  yaml_body = <<-YAML
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: crowdstrike-pull-secret
+      namespace: falcon-image-analyzer
+    type: kubernetes.io/dockerconfigjson
+    data:
+      .dockerconfigjson: ${base64encode(jsonencode({
+        auths = {
+          "registry.crowdstrike.com" = {
+            username = var.falcon_client_id
+            password = var.falcon_client_secret
+            auth     = base64encode("${var.falcon_client_id}:${var.falcon_client_secret}")
+          }
+        }
+      }))}
+  YAML
+
+  depends_on = [kubectl_manifest.falcon_image_analyzer_namespace]
+}
+
 # Deploy Unified Falcon Platform (Sensor, KAC, and IAR)
 resource "helm_release" "falcon_platform" {
   name       = "falcon-platform"
@@ -78,7 +150,7 @@ resource "helm_release" "falcon_platform" {
   namespace  = "falcon-system"
   version    = var.falcon_platform_version
 
-  create_namespace = false  # We're creating namespaces manually above
+  create_namespace = false
   timeout          = 600
   wait             = true
 
@@ -93,11 +165,6 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_cid
   }
 
-  set_sensitive {
-    name  = "falcon-sensor.falcon.apd"
-    value = "false"
-  }
-
   set {
     name  = "falcon-sensor.node.backend"
     value = "kernel"
@@ -106,6 +173,16 @@ resource "helm_release" "falcon_platform" {
   set {
     name  = "falcon-sensor.falcon.tags"
     value = var.falcon_tags
+  }
+
+  set {
+    name  = "falcon-sensor.node.image.repository"
+    value = "registry.crowdstrike.com/falcon-node-sensor"
+  }
+
+  set {
+    name  = "falcon-sensor.node.image.pullSecrets[0].name"
+    value = "crowdstrike-pull-secret"
   }
 
   # Falcon KAC Configuration (in falcon-kac namespace)
@@ -137,6 +214,16 @@ resource "helm_release" "falcon_platform" {
   set {
     name  = "falcon-kac.falcon.cloud"
     value = var.falcon_cloud_region
+  }
+
+  set {
+    name  = "falcon-kac.image.repository"
+    value = "registry.crowdstrike.com/falcon-kac"
+  }
+
+  set {
+    name  = "falcon-kac.image.pullSecrets[0].name"
+    value = "crowdstrike-pull-secret"
   }
 
   # Falcon Image Analyzer (IAR) Configuration (in falcon-image-analyzer namespace)
@@ -180,7 +267,16 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_cloud_region
   }
 
-  # Azure-specific configurations
+  set {
+    name  = "falcon-image-analyzer.image.repository"
+    value = "registry.crowdstrike.com/falcon-imageanalyzer"
+  }
+
+  set {
+    name  = "falcon-image-analyzer.image.pullSecrets[0].name"
+    value = "crowdstrike-pull-secret"
+  }
+
   set {
     name  = "falcon-image-analyzer.azure.enabled"
     value = "true"
@@ -194,6 +290,9 @@ resource "helm_release" "falcon_platform" {
   depends_on = [
     kubectl_manifest.falcon_system_namespace,
     kubectl_manifest.falcon_kac_namespace,
-    kubectl_manifest.falcon_image_analyzer_namespace
+    kubectl_manifest.falcon_image_analyzer_namespace,
+    kubectl_manifest.crowdstrike_pull_secret_system,
+    kubectl_manifest.crowdstrike_pull_secret_kac,
+    kubectl_manifest.crowdstrike_pull_secret_iar
   ]
 }
