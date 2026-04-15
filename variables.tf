@@ -25,6 +25,12 @@ variable "falcon_client_secret" {
   sensitive   = true
 }
 
+variable "falcon_registry_pull_token" {
+  description = "CrowdStrike Registry Pull Token (base64 encoded .dockerconfigjson)"
+  type        = string
+  sensitive   = true
+}
+
 variable "falcon_cid" {
   description = "Falcon Customer ID (CID) with checksum"
   type        = string
@@ -39,7 +45,7 @@ variable "falcon_cloud_region" {
 variable "falcon_platform_version" {
   description = "Falcon Platform Helm chart version"
   type        = string
-  default     = ""  # Empty string uses latest stable version
+  default     = ""
 }
 
 variable "falcon_tags" {
