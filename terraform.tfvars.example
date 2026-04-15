@@ -1,9 +1,15 @@
-resource_group_name     = "TedsAKS_group"
-aks_cluster_name        = "TedsAKS-9"
-azure_subscription_id   = "5a84cb53-b383-44db-bd58-c65ca3dfcb8c"
-falcon_client_id        = "your-falcon-client-id"
-falcon_client_secret    = "your-falcon-client-secret"
-falcon_cid              = "your-cid-with-checksum"
-falcon_cloud_region     = "us-1"
-falcon_platform_version = ""  # Leave empty for latest, or specify like "0.9.0"
-falcon_tags             = "env:production,cloud:azure,cluster:TedsAKS-9"
+resource_group_name      = "TedsAKS_group"
+aks_cluster_name         = "TedsAKS-9"
+azure_subscription_id    = "5a84cb53-b383-44db-bd58-c65ca3dfcb8c"
+
+# Falcon API Credentials (for KAC and IAR API calls)
+falcon_client_id         = "your-api-client-id"
+falcon_client_secret     = "your-api-client-secret"
+
+# Registry Pull Token (base64 encoded .dockerconfigjson from the script)
+falcon_registry_pull_token = "eyJhdXRocyI6eyJyZWdpc3RyeS5jcm93ZHN0cmlrZS5jb20iOnsidXNlcm5hbWUiOiJmYy0uLi4iLCJwYXNzd29yZCI6Ii4uLiIsImF1dGgiOiIuLi4ifX19"
+
+falcon_cid               = "58FC9E1DDE9946D4976B66844B4B15F6-D3"
+falcon_cloud_region      = "us-1"
+falcon_platform_version  = ""
+falcon_tags              = "env:production,cloud:azure,cluster:TedsAKS-9"
