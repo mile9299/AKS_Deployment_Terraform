@@ -40,6 +40,36 @@ provider "helm" {
   }
 }
 
+# Create falcon-system namespace
+resource "kubectl_manifest" "falcon_system_namespace" {
+  yaml_body = <<-YAML
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: falcon-system
+  YAML
+}
+
+# Create falcon-kac namespace
+resource "kubectl_manifest" "falcon_kac_namespace" {
+  yaml_body = <<-YAML
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: falcon-kac
+  YAML
+}
+
+# Create falcon-image-analyzer namespace
+resource "kubectl_manifest" "falcon_image_analyzer_namespace" {
+  yaml_body = <<-YAML
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: falcon-image-analyzer
+  YAML
+}
+
 # Deploy Unified Falcon Platform (Sensor, KAC, and IAR)
 resource "helm_release" "falcon_platform" {
   name       = "falcon-platform"
@@ -48,7 +78,7 @@ resource "helm_release" "falcon_platform" {
   namespace  = "falcon-system"
   version    = var.falcon_platform_version
 
-  create_namespace = true
+  create_namespace = false  # We're creating namespaces manually above
   timeout          = 600
   wait             = true
 
@@ -109,7 +139,7 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_cloud_region
   }
 
-  # Falcon Image Analyzer (IAR) Configuration (in falcon-imageanalyzer namespace)
+  # Falcon Image Analyzer (IAR) Configuration (in falcon-image-analyzer namespace)
   set {
     name  = "falcon-image-analyzer.enabled"
     value = "true"
@@ -117,7 +147,7 @@ resource "helm_release" "falcon_platform" {
 
   set {
     name  = "falcon-image-analyzer.installNamespace"
-    value = "falcon-imageanalyzer"
+    value = "falcon-image-analyzer"
   }
 
   set {
@@ -160,4 +190,10 @@ resource "helm_release" "falcon_platform" {
     name  = "falcon-image-analyzer.azure.subscriptionID"
     value = var.azure_subscription_id
   }
+
+  depends_on = [
+    kubectl_manifest.falcon_system_namespace,
+    kubectl_manifest.falcon_kac_namespace,
+    kubectl_manifest.falcon_image_analyzer_namespace
+  ]
 }
