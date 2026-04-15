@@ -8,6 +8,11 @@ variable "aks_cluster_name" {
   type        = string
 }
 
+variable "azure_subscription_id" {
+  description = "Azure Subscription ID"
+  type        = string
+}
+
 variable "falcon_client_id" {
   description = "Falcon API Client ID"
   type        = string
@@ -21,7 +26,7 @@ variable "falcon_client_secret" {
 }
 
 variable "falcon_cid" {
-  description = "Falcon Customer ID (CID)"
+  description = "Falcon Customer ID (CID) with checksum"
   type        = string
 }
 
@@ -31,32 +36,14 @@ variable "falcon_cloud_region" {
   default     = "us-1"
 }
 
-variable "falcon_image_registry" {
-  description = "Falcon container registry"
+variable "falcon_platform_version" {
+  description = "Falcon Platform Helm chart version"
   type        = string
-  default     = "registry.crowdstrike.com"
-}
-
-variable "falcon_sensor_version" {
-  description = "Falcon Sensor Helm chart version"
-  type        = string
-  default     = "latest"
-}
-
-variable "falcon_kac_version" {
-  description = "Falcon KAC Helm chart version"
-  type        = string
-  default     = "latest"
-}
-
-variable "falcon_iar_version" {
-  description = "Falcon IAR Helm chart version"
-  type        = string
-  default     = "latest"
+  default     = ""  # Empty string uses latest stable version
 }
 
 variable "falcon_tags" {
-  description = "Tags to apply to Falcon sensor"
+  description = "Tags to apply to Falcon sensor (comma-separated)"
   type        = string
   default     = ""
 }
