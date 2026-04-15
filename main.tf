@@ -1,4 +1,3 @@
-cat > main.tf << 'ENDOFFILE'
 terraform {
   required_providers {
     azurerm = {
