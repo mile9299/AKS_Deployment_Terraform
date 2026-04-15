@@ -1,0 +1,7 @@
+resource_group_name  = "my-aks-rg" #Azure Resource Group
+aks_cluster_name     = "my-aks-cluster" #Resource ID Value
+falcon_client_id     = "your-falcon-client-id"
+falcon_client_secret = "your-falcon-client-secret"
+falcon_cid           = "your-cid-with-checksum"
+falcon_cloud_region  = "us-1"
+falcon_tags          = "env:production,cloud:azure"
