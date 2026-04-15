@@ -40,142 +40,124 @@ provider "helm" {
   }
 }
 
-# Create namespace for Falcon
-resource "kubectl_manifest" "falcon_system_namespace" {
-  yaml_body = <<-YAML
-    apiVersion: v1
-    kind: Namespace
-    metadata:
-      name: falcon-system
-  YAML
-}
-
-# Create Falcon API credentials secret
-resource "kubectl_manifest" "falcon_credentials" {
-  yaml_body = <<-YAML
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: falcon-api-credentials
-      namespace: falcon-system
-    type: Opaque
-    stringData:
-      client_id: ${var.falcon_client_id}
-      client_secret: ${var.falcon_client_secret}
-  YAML
-
-  depends_on = [kubectl_manifest.falcon_system_namespace]
-}
-
-# Deploy Falcon Sensor as DaemonSet
-resource "helm_release" "falcon_sensor" {
-  name       = "falcon-sensor"
+# Deploy Unified Falcon Platform (Sensor, KAC, and IAR)
+resource "helm_release" "falcon_platform" {
+  name       = "falcon-platform"
   repository = "https://crowdstrike.github.io/falcon-helm"
-  chart      = "falcon-sensor"
+  chart      = "falcon-platform"
   namespace  = "falcon-system"
-  version    = var.falcon_sensor_version
+  version    = var.falcon_platform_version
 
+  create_namespace = true
+  timeout          = 600
+  wait             = true
+
+  # Falcon Sensor Configuration (DaemonSet in falcon-system namespace)
   set {
-    name  = "falcon.cid"
-    value = var.falcon_cid
-  }
-
-  set_sensitive {
-    name  = "falcon.apd"
-    value = "false"
-  }
-
-  set {
-    name  = "node.backend"
-    value = "kernel"
-  }
-
-  set {
-    name  = "falcon.tags"
-    value = var.falcon_tags
-  }
-
-  set {
-    name  = "node.image.repository"
-    value = var.falcon_image_registry
-  }
-
-  depends_on = [kubectl_manifest.falcon_credentials]
-}
-
-# Deploy Kubernetes Admission Controller (KAC)
-resource "helm_release" "falcon_kac" {
-  name       = "falcon-kac"
-  repository = "https://crowdstrike.github.io/falcon-helm"
-  chart      = "falcon-kac"
-  namespace  = "falcon-system"
-  version    = var.falcon_kac_version
-
-  set {
-    name  = "falcon.cid"
-    value = var.falcon_cid
-  }
-
-  set {
-    name  = "image.repository"
-    value = "${var.falcon_image_registry}/falcon-kac"
-  }
-
-  set {
-    name  = "falcon.clientID"
-    value = var.falcon_client_id
-  }
-
-  set_sensitive {
-    name  = "falcon.clientSecret"
-    value = var.falcon_client_secret
-  }
-
-  set {
-    name  = "installNamespace"
-    value = "falcon-system"
-  }
-
-  depends_on = [kubectl_manifest.falcon_credentials]
-}
-
-# Deploy Image Assessment at Runtime (IAR)
-resource "helm_release" "falcon_iar" {
-  name       = "falcon-image-analyzer"
-  repository = "https://crowdstrike.github.io/falcon-helm"
-  chart      = "falcon-image-analyzer"
-  namespace  = "falcon-system"
-  version    = var.falcon_iar_version
-
-  set {
-    name  = "deployment.enabled"
+    name  = "falcon-sensor.enabled"
     value = "true"
   }
 
   set {
-    name  = "crowdstrikeConfig.clientID"
+    name  = "falcon-sensor.falcon.cid"
+    value = var.falcon_cid
+  }
+
+  set_sensitive {
+    name  = "falcon-sensor.falcon.apd"
+    value = "false"
+  }
+
+  set {
+    name  = "falcon-sensor.node.backend"
+    value = "kernel"
+  }
+
+  set {
+    name  = "falcon-sensor.falcon.tags"
+    value = var.falcon_tags
+  }
+
+  # Falcon KAC Configuration (in falcon-kac namespace)
+  set {
+    name  = "falcon-kac.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "falcon-kac.installNamespace"
+    value = "falcon-kac"
+  }
+
+  set {
+    name  = "falcon-kac.falcon.cid"
+    value = var.falcon_cid
+  }
+
+  set {
+    name  = "falcon-kac.falcon.clientID"
     value = var.falcon_client_id
   }
 
   set_sensitive {
-    name  = "crowdstrikeConfig.clientSecret"
+    name  = "falcon-kac.falcon.clientSecret"
     value = var.falcon_client_secret
   }
 
   set {
-    name  = "crowdstrikeConfig.clusterName"
+    name  = "falcon-kac.falcon.cloud"
+    value = var.falcon_cloud_region
+  }
+
+  # Falcon Image Analyzer (IAR) Configuration (in falcon-imageanalyzer namespace)
+  set {
+    name  = "falcon-image-analyzer.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "falcon-image-analyzer.installNamespace"
+    value = "falcon-imageanalyzer"
+  }
+
+  set {
+    name  = "falcon-image-analyzer.deployment.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "falcon-image-analyzer.crowdstrikeConfig.cid"
+    value = var.falcon_cid
+  }
+
+  set {
+    name  = "falcon-image-analyzer.crowdstrikeConfig.clientID"
+    value = var.falcon_client_id
+  }
+
+  set_sensitive {
+    name  = "falcon-image-analyzer.crowdstrikeConfig.clientSecret"
+    value = var.falcon_client_secret
+  }
+
+  set {
+    name  = "falcon-image-analyzer.crowdstrikeConfig.clusterName"
     value = var.aks_cluster_name
   }
 
   set {
-    name  = "image.repository"
-    value = "${var.falcon_image_registry}/falcon-imageanalyzer"
+    name  = "falcon-image-analyzer.crowdstrikeConfig.cloud"
+    value = var.falcon_cloud_region
+  }
+
+  # Azure-specific configurations
+  set {
+    name  = "falcon-image-analyzer.azure.enabled"
+    value = "true"
   }
 
   set {
-    name  = "crowdstrikeConfig.cid"
-    value = var.falcon_cid
+    name  = "falcon-image-analyzer.azure.subscriptionID"
+    value = var.azure_subscription_id
   }
-
-  depends_on = [kubectl_manifest.falcon_credentials]
 }
