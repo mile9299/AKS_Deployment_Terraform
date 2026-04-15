@@ -75,15 +75,7 @@ metadata:
   namespace: falcon-system
 type: kubernetes.io/dockerconfigjson
 data:
-  .dockerconfigjson: ${base64encode(jsonencode({
-    auths = {
-      "registry.crowdstrike.com" = {
-        username = var.falcon_client_id
-        password = var.falcon_client_secret
-        auth     = base64encode("${var.falcon_client_id}:${var.falcon_client_secret}")
-      }
-    }
-  }))}
+  .dockerconfigjson: ${var.falcon_registry_pull_token}
 YAML
 
   depends_on = [kubectl_manifest.falcon_system_namespace]
@@ -98,15 +90,7 @@ metadata:
   namespace: falcon-kac
 type: kubernetes.io/dockerconfigjson
 data:
-  .dockerconfigjson: ${base64encode(jsonencode({
-    auths = {
-      "registry.crowdstrike.com" = {
-        username = var.falcon_client_id
-        password = var.falcon_client_secret
-        auth     = base64encode("${var.falcon_client_id}:${var.falcon_client_secret}")
-      }
-    }
-  }))}
+  .dockerconfigjson: ${var.falcon_registry_pull_token}
 YAML
 
   depends_on = [kubectl_manifest.falcon_kac_namespace]
@@ -121,15 +105,7 @@ metadata:
   namespace: falcon-image-analyzer
 type: kubernetes.io/dockerconfigjson
 data:
-  .dockerconfigjson: ${base64encode(jsonencode({
-    auths = {
-      "registry.crowdstrike.com" = {
-        username = var.falcon_client_id
-        password = var.falcon_client_secret
-        auth     = base64encode("${var.falcon_client_id}:${var.falcon_client_secret}")
-      }
-    }
-  }))}
+  .dockerconfigjson: ${var.falcon_registry_pull_token}
 YAML
 
   depends_on = [kubectl_manifest.falcon_image_analyzer_namespace]
