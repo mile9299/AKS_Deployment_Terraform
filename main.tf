@@ -1,284 +1,85 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = "~> 3.0"
-    }
-    kubectl = {
-      source  = "gavinbunney/kubectl"
-      version = "~> 1.14"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.9"
-    }
-  }
+variable "resource_group_name" {
+  description = "Azure Resource Group name where AKS cluster exists"
+  type        = string
 }
 
-provider "azurerm" {
-  features {}
+variable "aks_cluster_name" {
+  description = "Name of the existing AKS cluster"
+  type        = string
 }
 
-locals {
-  cluster_name        = can(regex(".*/(.+)$", var.aks_cluster_name)) ? regex(".*/(.+)$", var.aks_cluster_name)[0] : var.aks_cluster_name
-  cluster_resource_id = data.azurerm_kubernetes_cluster.aks.id
+variable "azure_subscription_id" {
+  description = "Azure Subscription ID"
+  type        = string
 }
 
-data "azurerm_kubernetes_cluster" "aks" {
-  name                = local.cluster_name
-  resource_group_name = var.resource_group_name
+variable "falcon_client_id" {
+  description = "Falcon API Client ID"
+  type        = string
+  sensitive   = true
 }
 
-provider "kubectl" {
-  host                   = data.azurerm_kubernetes_cluster.aks.kube_config.0.host
-  cluster_ca_certificate = base64decode(data.azurerm_kubernetes_cluster.aks.kube_config.0.cluster_ca_certificate)
-  token                  = data.azurerm_kubernetes_cluster.aks.kube_config.0.password
-  load_config_file       = false
+variable "falcon_client_secret" {
+  description = "Falcon API Client Secret"
+  type        = string
+  sensitive   = true
 }
 
-provider "helm" {
-  kubernetes {
-    host                   = data.azurerm_kubernetes_cluster.aks.kube_config.0.host
-    cluster_ca_certificate = base64decode(data.azurerm_kubernetes_cluster.aks.kube_config.0.cluster_ca_certificate)
-    token                  = data.azurerm_kubernetes_cluster.aks.kube_config.0.password
-  }
+variable "falcon_registry_pull_token" {
+  description = "CrowdStrike Registry Pull Token for Sensor (--type falcon-sensor --get-pull-token)"
+  type        = string
+  sensitive   = true
 }
 
-resource "kubectl_manifest" "falcon_system_namespace" {
-  yaml_body = <<-YAML
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: falcon-system
-YAML
+variable "falcon_kac_pull_token" {
+  description = "CrowdStrike Registry Pull Token for KAC (--type falcon-kac --get-pull-token)"
+  type        = string
+  sensitive   = true
 }
 
-resource "kubectl_manifest" "falcon_kac_namespace" {
-  yaml_body = <<-YAML
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: falcon-kac
-YAML
+variable "falcon_iar_pull_token" {
+  description = "CrowdStrike Registry Pull Token for IAR (--type falcon-imageanalyzer --get-pull-token)"
+  type        = string
+  sensitive   = true
 }
 
-resource "kubectl_manifest" "falcon_image_analyzer_namespace" {
-  yaml_body = <<-YAML
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: falcon-image-analyzer
-YAML
+variable "falcon_cid" {
+  description = "Falcon Customer ID (CID) with checksum"
+  type        = string
 }
 
-resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
-  yaml_body = <<-YAML
-apiVersion: v1
-kind: Secret
-metadata:
-  name: crowdstrike-pull-secret
-  namespace: falcon-system
-type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: ${var.falcon_registry_pull_token}
-YAML
-
-  depends_on = [kubectl_manifest.falcon_system_namespace]
+variable "falcon_cloud_region" {
+  description = "Falcon Cloud Region (us-1, us-2, eu-1, us-gov-1)"
+  type        = string
+  default     = "us-1"
 }
 
-resource "helm_release" "falcon_platform" {
-  name       = "falcon-platform"
-  repository = "https://crowdstrike.github.io/falcon-helm"
-  chart      = "falcon-platform"
-  namespace  = "falcon-system"
-  version    = var.falcon_platform_version
+variable "falcon_platform_version" {
+  description = "Falcon Platform Helm chart version (leave empty for latest)"
+  type        = string
+  default     = ""
+}
 
-  create_namespace = false
-  timeout          = 600
-  wait             = true
+variable "falcon_sensor_version" {
+  description = "Falcon Sensor image version"
+  type        = string
+  default     = "7.35.0-18803-1"
+}
 
-  set {
-    name  = "nameOverride"
-    value = ""
-  }
+variable "falcon_kac_version" {
+  description = "Falcon KAC image version"
+  type        = string
+  default     = "7.36.0-3401"
+}
 
-  set {
-    name  = "fullnameOverride"
-    value = ""
-  }
+variable "falcon_iar_version" {
+  description = "Falcon Image Analyzer version"
+  type        = string
+  default     = "1.0.23"
+}
 
-  # Falcon Sensor Configuration
-  set {
-    name  = "falcon-sensor.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "falcon-sensor.nameOverride"
-    value = "falcon-sensor"
-  }
-
-  set {
-    name  = "falcon-sensor.fullnameOverride"
-    value = "falcon-sensor"
-  }
-
-  set {
-    name  = "falcon-sensor.falcon.cid"
-    value = var.falcon_cid
-  }
-
-  set {
-    name  = "falcon-sensor.node.backend"
-    value = "kernel"
-  }
-
-  set {
-    name  = "falcon-sensor.falcon.tags"
-    value = var.falcon_tags
-  }
-
-  set {
-    name  = "falcon-sensor.node.image.repository"
-    value = "registry.crowdstrike.com/falcon-sensor/release/falcon-sensor"
-  }
-
-  set {
-    name  = "falcon-sensor.node.image.tag"
-    value = var.falcon_sensor_version
-  }
-
-  set {
-    name  = "falcon-sensor.node.image.pullSecrets"
-    value = "crowdstrike-pull-secret"
-  }
-
-  # Falcon KAC Configuration
-  set {
-    name  = "falcon-kac.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "falcon-kac.nameOverride"
-    value = "falcon-kac"
-  }
-
-  set {
-    name  = "falcon-kac.fullnameOverride"
-    value = "falcon-kac"
-  }
-
-  set {
-    name  = "falcon-kac.installNamespace"
-    value = "falcon-kac"
-  }
-
-  set {
-    name  = "falcon-kac.falcon.cid"
-    value = var.falcon_cid
-  }
-
-  set {
-    name  = "falcon-kac.image.repository"
-    value = "registry.crowdstrike.com/falcon-kac/release/falcon-kac"
-  }
-
-  set {
-    name  = "falcon-kac.image.tag"
-    value = var.falcon_kac_version
-  }
-
-  set_sensitive {
-    name  = "falcon-kac.image.registryConfigJSON"
-    value = var.falcon_kac_pull_token
-  }
-
-  set {
-    name  = "falcon-kac.clusterName"
-    value = local.cluster_resource_id
-  }
-
-  # Falcon Image Analyzer Configuration
-  set {
-    name  = "falcon-image-analyzer.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "falcon-image-analyzer.nameOverride"
-    value = "falcon-image-analyzer"
-  }
-
-  set {
-    name  = "falcon-image-analyzer.fullnameOverride"
-    value = "falcon-image-analyzer"
-  }
-
-  set {
-    name  = "falcon-image-analyzer.installNamespace"
-    value = "falcon-image-analyzer"
-  }
-
-  set {
-    name  = "falcon-image-analyzer.deployment.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "falcon-image-analyzer.crowdstrikeConfig.cid"
-    value = var.falcon_cid
-  }
-
-  set {
-    name  = "falcon-image-analyzer.crowdstrikeConfig.clientID"
-    value = var.falcon_client_id
-  }
-
-  set_sensitive {
-    name  = "falcon-image-analyzer.crowdstrikeConfig.clientSecret"
-    value = var.falcon_client_secret
-  }
-
-  set {
-    name  = "falcon-image-analyzer.crowdstrikeConfig.clusterName"
-    value = local.cluster_resource_id
-  }
-
-  set {
-    name  = "falcon-image-analyzer.crowdstrikeConfig.cloud"
-    value = var.falcon_cloud_region
-  }
-
-  set {
-    name  = "falcon-image-analyzer.image.repository"
-    value = "registry.crowdstrike.com/falcon-imageanalyzer/${var.falcon_cloud_region}/release/falcon-imageanalyzer"
-  }
-
-  set {
-    name  = "falcon-image-analyzer.image.tag"
-    value = var.falcon_iar_version
-  }
-
-  set_sensitive {
-    name  = "falcon-image-analyzer.image.registryConfigJSON"
-    value = var.falcon_iar_pull_token
-  }
-
-  set {
-    name  = "falcon-image-analyzer.azure.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "falcon-image-analyzer.azure.subscriptionID"
-    value = var.azure_subscription_id
-  }
-
-  depends_on = [
-    kubectl_manifest.falcon_system_namespace,
-    kubectl_manifest.falcon_kac_namespace,
-    kubectl_manifest.falcon_image_analyzer_namespace,
-    kubectl_manifest.crowdstrike_pull_secret_system
-  ]
+variable "falcon_tags" {
+  description = "Tags to apply to Falcon sensor"
+  type        = string
+  default     = ""
 }
