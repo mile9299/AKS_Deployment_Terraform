@@ -19,8 +19,15 @@ provider "azurerm" {
   features {}
 }
 
+# Extract cluster name from resource ID if full ID is provided
+locals {
+  # If aks_cluster_name contains "/" it's a full resource ID, extract the name
+  # Otherwise use it as-is
+  cluster_name = can(regex(".*/(.+)$", var.aks_cluster_name)) ? regex(".*/(.+)$", var.aks_cluster_name)[0] : var.aks_cluster_name
+}
+
 data "azurerm_kubernetes_cluster" "aks" {
-  name                = var.aks_cluster_name
+  name                = local.cluster_name
   resource_group_name = var.resource_group_name
 }
 
@@ -66,7 +73,6 @@ metadata:
 YAML
 }
 
-# Pull secret for Falcon Sensor
 resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -82,7 +88,6 @@ YAML
   depends_on = [kubectl_manifest.falcon_system_namespace]
 }
 
-# Pull secret for Falcon KAC
 resource "kubectl_manifest" "crowdstrike_pull_secret_kac" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -212,7 +217,6 @@ resource "helm_release" "falcon_platform" {
   }
 
   # Falcon Image Analyzer Configuration
-  # Uses registryConfigJSON instead of pullSecrets
   set {
     name  = "falcon-image-analyzer.enabled"
     value = "true"
@@ -253,9 +257,10 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_client_secret
   }
 
+  # Use local.cluster_name to ensure clean name is used
   set {
     name  = "falcon-image-analyzer.crowdstrikeConfig.clusterName"
-    value = var.aks_cluster_name
+    value = local.cluster_name
   }
 
   set {
@@ -273,7 +278,6 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_iar_version
   }
 
-  # Key fix - use registryConfigJSON instead of pullSecrets
   set_sensitive {
     name  = "falcon-image-analyzer.image.registryConfigJSON"
     value = var.falcon_iar_pull_token
