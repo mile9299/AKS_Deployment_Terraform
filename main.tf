@@ -1,4 +1,3 @@
-
 terraform {
   required_providers {
     azurerm = {
@@ -67,7 +66,7 @@ metadata:
 YAML
 }
 
-# Pull secret for Falcon Sensor (uses base64 encoded dockerconfigjson)
+# Pull secret for Falcon Sensor (base64 encoded)
 resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -83,7 +82,7 @@ YAML
   depends_on = [kubectl_manifest.falcon_system_namespace]
 }
 
-# Pull secret for Falcon KAC (uses registry credentials directly)
+# Pull secret for Falcon KAC (NOT base64 encoded - use stringData)
 resource "kubectl_manifest" "crowdstrike_pull_secret_kac" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -93,22 +92,13 @@ metadata:
   namespace: falcon-kac
 type: kubernetes.io/dockerconfigjson
 stringData:
-  .dockerconfigjson: |
-    {
-      "auths": {
-        "registry.crowdstrike.com": {
-          "username": "${var.falcon_registry_username}",
-          "password": "${var.falcon_registry_password}",
-          "auth": "${base64encode("${var.falcon_registry_username}:${var.falcon_registry_password}")}"
-        }
-      }
-    }
+  .dockerconfigjson: ${base64decode(var.falcon_registry_pull_token)}
 YAML
 
   depends_on = [kubectl_manifest.falcon_kac_namespace]
 }
 
-# Pull secret for Falcon IAR (uses registry credentials directly)
+# Pull secret for Falcon IAR (NOT base64 encoded - use stringData)
 resource "kubectl_manifest" "crowdstrike_pull_secret_iar" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -118,16 +108,7 @@ metadata:
   namespace: falcon-image-analyzer
 type: kubernetes.io/dockerconfigjson
 stringData:
-  .dockerconfigjson: |
-    {
-      "auths": {
-        "registry.crowdstrike.com": {
-          "username": "${var.falcon_registry_username}",
-          "password": "${var.falcon_registry_password}",
-          "auth": "${base64encode("${var.falcon_registry_username}:${var.falcon_registry_password}")}"
-        }
-      }
-    }
+  .dockerconfigjson: ${base64decode(var.falcon_registry_pull_token)}
 YAML
 
   depends_on = [kubectl_manifest.falcon_image_analyzer_namespace]
