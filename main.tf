@@ -132,6 +132,7 @@ resource "helm_release" "falcon_platform" {
     value = ""
   }
 
+  # Falcon Sensor Configuration
   set {
     name  = "falcon-sensor.enabled"
     value = "true"
@@ -162,9 +163,15 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_tags
   }
 
+  # Correct Falcon Sensor registry and image
   set {
     name  = "falcon-sensor.node.image.repository"
-    value = "registry.crowdstrike.com/falcon-node-sensor"
+    value = "registry.crowdstrike.com/falcon-sensor/release/falcon-sensor"
+  }
+
+  set {
+    name  = "falcon-sensor.node.image.tag"
+    value = var.falcon_sensor_version
   }
 
   set {
@@ -172,6 +179,7 @@ resource "helm_release" "falcon_platform" {
     value = "crowdstrike-pull-secret"
   }
 
+  # Falcon KAC Configuration
   set {
     name  = "falcon-kac.enabled"
     value = "true"
@@ -212,9 +220,15 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_cloud_region
   }
 
+  # Correct Falcon KAC registry and image
   set {
     name  = "falcon-kac.image.repository"
-    value = "registry.crowdstrike.com/falcon-kac"
+    value = "registry.crowdstrike.com/falcon-kac/release/falcon-kac"
+  }
+
+  set {
+    name  = "falcon-kac.image.tag"
+    value = var.falcon_kac_version
   }
 
   set {
@@ -222,6 +236,7 @@ resource "helm_release" "falcon_platform" {
     value = "crowdstrike-pull-secret"
   }
 
+  # Falcon Image Analyzer Configuration
   set {
     name  = "falcon-image-analyzer.enabled"
     value = "true"
@@ -272,9 +287,15 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_cloud_region
   }
 
+  # Correct Falcon Image Analyzer registry and image (note: includes region in path)
   set {
     name  = "falcon-image-analyzer.image.repository"
-    value = "registry.crowdstrike.com/falcon-imageanalyzer"
+    value = "registry.crowdstrike.com/falcon-imageanalyzer/${var.falcon_cloud_region}/release/falcon-imageanalyzer"
+  }
+
+  set {
+    name  = "falcon-image-analyzer.image.tag"
+    value = var.falcon_iar_version
   }
 
   set {
