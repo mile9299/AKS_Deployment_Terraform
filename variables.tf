@@ -26,19 +26,7 @@ variable "falcon_client_secret" {
 }
 
 variable "falcon_registry_pull_token" {
-  description = "CrowdStrike Registry Pull Token for Sensor (base64 encoded .dockerconfigjson)"
-  type        = string
-  sensitive   = true
-}
-
-variable "falcon_registry_username" {
-  description = "CrowdStrike Registry Username (fc-* token) for KAC and IAR"
-  type        = string
-  sensitive   = true
-}
-
-variable "falcon_registry_password" {
-  description = "CrowdStrike Registry Password/Token for KAC and IAR"
+  description = "CrowdStrike Registry Pull Token (base64 encoded .dockerconfigjson) - same token used for all components"
   type        = string
   sensitive   = true
 }
