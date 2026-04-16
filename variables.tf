@@ -48,6 +48,24 @@ variable "falcon_platform_version" {
   default     = ""
 }
 
+variable "falcon_sensor_version" {
+  description = "Falcon Sensor image version"
+  type        = string
+  default     = "7.35.0-18803-1"
+}
+
+variable "falcon_kac_version" {
+  description = "Falcon KAC image version"
+  type        = string
+  default     = "7.36.0-3401"
+}
+
+variable "falcon_iar_version" {
+  description = "Falcon Image Analyzer version"
+  type        = string
+  default     = "1.0.23"
+}
+
 variable "falcon_tags" {
   description = "Tags to apply to Falcon sensor (comma-separated)"
   type        = string
