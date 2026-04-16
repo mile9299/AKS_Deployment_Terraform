@@ -1,3 +1,4 @@
+
 terraform {
   required_providers {
     azurerm = {
@@ -66,6 +67,7 @@ metadata:
 YAML
 }
 
+# Pull secret for Falcon Sensor (uses base64 encoded dockerconfigjson)
 resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -81,6 +83,7 @@ YAML
   depends_on = [kubectl_manifest.falcon_system_namespace]
 }
 
+# Pull secret for Falcon KAC (uses registry credentials directly)
 resource "kubectl_manifest" "crowdstrike_pull_secret_kac" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -89,13 +92,23 @@ metadata:
   name: crowdstrike-pull-secret
   namespace: falcon-kac
 type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: ${var.falcon_registry_pull_token}
+stringData:
+  .dockerconfigjson: |
+    {
+      "auths": {
+        "registry.crowdstrike.com": {
+          "username": "${var.falcon_registry_username}",
+          "password": "${var.falcon_registry_password}",
+          "auth": "${base64encode("${var.falcon_registry_username}:${var.falcon_registry_password}")}"
+        }
+      }
+    }
 YAML
 
   depends_on = [kubectl_manifest.falcon_kac_namespace]
 }
 
+# Pull secret for Falcon IAR (uses registry credentials directly)
 resource "kubectl_manifest" "crowdstrike_pull_secret_iar" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -104,8 +117,17 @@ metadata:
   name: crowdstrike-pull-secret
   namespace: falcon-image-analyzer
 type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: ${var.falcon_registry_pull_token}
+stringData:
+  .dockerconfigjson: |
+    {
+      "auths": {
+        "registry.crowdstrike.com": {
+          "username": "${var.falcon_registry_username}",
+          "password": "${var.falcon_registry_password}",
+          "auth": "${base64encode("${var.falcon_registry_username}:${var.falcon_registry_password}")}"
+        }
+      }
+    }
 YAML
 
   depends_on = [kubectl_manifest.falcon_image_analyzer_namespace]
@@ -163,7 +185,6 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_tags
   }
 
-  # Correct Falcon Sensor registry and image
   set {
     name  = "falcon-sensor.node.image.repository"
     value = "registry.crowdstrike.com/falcon-sensor/release/falcon-sensor"
@@ -220,7 +241,6 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_cloud_region
   }
 
-  # Correct Falcon KAC registry and image
   set {
     name  = "falcon-kac.image.repository"
     value = "registry.crowdstrike.com/falcon-kac/release/falcon-kac"
@@ -287,10 +307,9 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_cloud_region
   }
 
-  # Correct Falcon Image Analyzer registry and image (note: includes region in path)
   set {
     name  = "falcon-image-analyzer.image.repository"
-    value = "registry.crowdstrike.com/falcon-imageanalyzer/${var.falcon_cloud_region}/release/falcon-imageanalyzer"
+    value = "registry.crowdstrike.com/falcon-imageanalyzer/us-1/release/falcon-imageanalyzer"
   }
 
   set {
