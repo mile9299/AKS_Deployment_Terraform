@@ -6,12 +6,9 @@ azure_subscription_id    = ""
 falcon_client_id         = "your-api-client-id"
 falcon_client_secret     = "your-api-client-secret"
 
-# Registry Pull Token for Sensor (base64 encoded)
+# Registry Pull Token (base64 encoded - same for all components)
+# Sensor uses it as-is (base64), KAC and IAR use it decoded
 falcon_registry_pull_token = ""
-
-# Registry Credentials for KAC and IAR (NOT base64 encoded)
-falcon_registry_username = "fc-your-token-id"
-falcon_registry_password = "your-token-password"
 
 # Falcon Configuration
 falcon_cid               = ""
