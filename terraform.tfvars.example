@@ -1,6 +1,6 @@
 resource_group_name        = "TedsAKS_group"
 aks_cluster_name           = "TedsAKS-10"
-azure_subscription_id      = "5a84cb53-b383-44db-bd58-c65ca3dfcb8c"
+azure_subscription_id      = ""
 
 falcon_client_id           = "your-client-id"
 falcon_client_secret       = "your-client-secret"
