@@ -15,7 +15,7 @@ falcon_kac_pull_token      = "YOUR_KAC_PULL_TOKEN"
 # IAR: ./falcon-container-sensor-pull.sh -u $ID -s $SECRET --type falcon-imageanalyzer --platform x86_64 --get-pull-token
 falcon_iar_pull_token      = "YOUR_IAR_PULL_TOKEN"
 
-falcon_cid                 = "58FC9E1DDE9946D4976B66844B4B15F6-D3"
+falcon_cid                 = ""
 falcon_cloud_region        = "us-1"
 falcon_platform_version    = ""
 
