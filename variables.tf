@@ -26,13 +26,19 @@ variable "falcon_client_secret" {
 }
 
 variable "falcon_registry_pull_token" {
-  description = "CrowdStrike Registry Pull Token for Sensor and KAC"
+  description = "CrowdStrike Registry Pull Token for Sensor (--type falcon-sensor --get-pull-token)"
+  type        = string
+  sensitive   = true
+}
+
+variable "falcon_kac_pull_token" {
+  description = "CrowdStrike Registry Pull Token for KAC (--type falcon-kac --get-pull-token)"
   type        = string
   sensitive   = true
 }
 
 variable "falcon_iar_pull_token" {
-  description = "CrowdStrike Registry Pull Token for IAR (registryConfigJSON)"
+  description = "CrowdStrike Registry Pull Token for IAR (--type falcon-imageanalyzer --get-pull-token)"
   type        = string
   sensitive   = true
 }
