@@ -1,16 +1,20 @@
 resource_group_name      = "TedsAKS_group"
 aks_cluster_name         = "TedsAKS-9"
-azure_subscription_id    = "5a84cb53-b383-44db-bd58-c65ca3dfcb8c"
+azure_subscription_id    = ""
 
 # Falcon API Credentials
 falcon_client_id         = "your-api-client-id"
 falcon_client_secret     = "your-api-client-secret"
 
-# Registry Pull Token
-falcon_registry_pull_token = "your-base64-encoded-pull-token"
+# Registry Pull Token for Sensor (base64 encoded)
+falcon_registry_pull_token = ""
+
+# Registry Credentials for KAC and IAR (NOT base64 encoded)
+falcon_registry_username = "fc-your-token-id"
+falcon_registry_password = "your-token-password"
 
 # Falcon Configuration
-falcon_cid               = "58FC9E1DDE9946D4976B66844B4B15F6-D3"
+falcon_cid               = ""
 falcon_cloud_region      = "us-1"
 falcon_platform_version  = ""
 
