@@ -66,7 +66,7 @@ metadata:
 YAML
 }
 
-# Pull secret for Falcon Sensor - uses pull token
+# Pull secret for Falcon Sensor
 resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -82,7 +82,7 @@ YAML
   depends_on = [kubectl_manifest.falcon_system_namespace]
 }
 
-# Pull secret for Falcon KAC - uses pull token
+# Pull secret for Falcon KAC
 resource "kubectl_manifest" "crowdstrike_pull_secret_kac" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -96,30 +96,6 @@ data:
 YAML
 
   depends_on = [kubectl_manifest.falcon_kac_namespace]
-}
-
-# Pull secret for Falcon IAR - uses Client ID and Secret directly
-resource "kubectl_manifest" "crowdstrike_pull_secret_iar" {
-  yaml_body = <<-YAML
-apiVersion: v1
-kind: Secret
-metadata:
-  name: crowdstrike-pull-secret
-  namespace: falcon-image-analyzer
-type: kubernetes.io/dockerconfigjson
-data:
-  .dockerconfigjson: ${base64encode(jsonencode({
-    auths = {
-      "registry.crowdstrike.com" = {
-        username = var.falcon_client_id
-        password = var.falcon_client_secret
-        auth     = base64encode("${var.falcon_client_id}:${var.falcon_client_secret}")
-      }
-    }
-  }))}
-YAML
-
-  depends_on = [kubectl_manifest.falcon_image_analyzer_namespace]
 }
 
 resource "helm_release" "falcon_platform" {
@@ -236,6 +212,7 @@ resource "helm_release" "falcon_platform" {
   }
 
   # Falcon Image Analyzer Configuration
+  # Uses registryConfigJSON instead of pullSecrets
   set {
     name  = "falcon-image-analyzer.enabled"
     value = "true"
@@ -296,9 +273,10 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_iar_version
   }
 
-  set {
-    name  = "falcon-image-analyzer.image.pullSecrets"
-    value = "crowdstrike-pull-secret"
+  # Key fix - use registryConfigJSON instead of pullSecrets
+  set_sensitive {
+    name  = "falcon-image-analyzer.image.registryConfigJSON"
+    value = var.falcon_iar_pull_token
   }
 
   set {
@@ -316,7 +294,6 @@ resource "helm_release" "falcon_platform" {
     kubectl_manifest.falcon_kac_namespace,
     kubectl_manifest.falcon_image_analyzer_namespace,
     kubectl_manifest.crowdstrike_pull_secret_system,
-    kubectl_manifest.crowdstrike_pull_secret_kac,
-    kubectl_manifest.crowdstrike_pull_secret_iar
+    kubectl_manifest.crowdstrike_pull_secret_kac
   ]
 }
