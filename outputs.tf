@@ -20,24 +20,35 @@ output "falcon_kac_namespace" {
 
 output "falcon_iar_namespace" {
   description = "Namespace where Falcon IAR is deployed"
-  value       = "falcon-imageanalyzer"
+  value       = "falcon-image-analyzer"
+}
+
+output "cluster_resource_id" {
+  description = "Full Azure Resource ID used for KAC and IAR cluster identification"
+  value       = data.azurerm_kubernetes_cluster.aks.id
 }
 
 output "deployment_notes" {
   description = "Post-deployment verification commands"
-  value = <<-EOT
+  value       = <<-EOT
     Verify deployments with:
-    
+
     # Check Falcon Sensor (DaemonSet)
     kubectl get daemonset -n falcon-system
     kubectl get pods -n falcon-system
-    
+
     # Check Falcon KAC
     kubectl get deployment -n falcon-kac
     kubectl get pods -n falcon-kac
-    
+
     # Check Falcon IAR
-    kubectl get deployment -n falcon-imageanalyzer
-    kubectl get pods -n falcon-imageanalyzer
+    kubectl get deployment -n falcon-image-analyzer
+    kubectl get pods -n falcon-image-analyzer
+
+    # Check KAC cluster registration
+    kubectl get configmap falcon-kac-meta -n falcon-kac -o yaml
+
+    # Check KAC logs
+    kubectl logs -n falcon-kac -l app.kubernetes.io/name=falcon-kac -c falcon-watcher --tail=50
   EOT
 }
