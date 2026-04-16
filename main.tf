@@ -66,7 +66,7 @@ metadata:
 YAML
 }
 
-# Pull secret for Falcon Sensor (base64 encoded)
+# Pull secret for Falcon Sensor - use token as-is (already base64)
 resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -82,7 +82,7 @@ YAML
   depends_on = [kubectl_manifest.falcon_system_namespace]
 }
 
-# Pull secret for Falcon KAC (decoded JSON string)
+# Pull secret for Falcon KAC - use token as-is (already base64)
 resource "kubectl_manifest" "crowdstrike_pull_secret_kac" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -91,15 +91,14 @@ metadata:
   name: crowdstrike-pull-secret
   namespace: falcon-kac
 type: kubernetes.io/dockerconfigjson
-stringData:
-  .dockerconfigjson: |-
-    ${base64decode(var.falcon_registry_pull_token)}
+data:
+  .dockerconfigjson: ${var.falcon_registry_pull_token}
 YAML
 
   depends_on = [kubectl_manifest.falcon_kac_namespace]
 }
 
-# Pull secret for Falcon IAR (decoded JSON string)
+# Pull secret for Falcon IAR - use token as-is (already base64)
 resource "kubectl_manifest" "crowdstrike_pull_secret_iar" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -108,9 +107,8 @@ metadata:
   name: crowdstrike-pull-secret
   namespace: falcon-image-analyzer
 type: kubernetes.io/dockerconfigjson
-stringData:
-  .dockerconfigjson: |-
-    ${base64decode(var.falcon_registry_pull_token)}
+data:
+  .dockerconfigjson: ${var.falcon_registry_pull_token}
 YAML
 
   depends_on = [kubectl_manifest.falcon_image_analyzer_namespace]
