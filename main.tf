@@ -19,12 +19,8 @@ provider "azurerm" {
   features {}
 }
 
-locals {
-  cluster_name = can(regex(".*/(.+)$", var.aks_cluster_name)) ? regex(".*/(.+)$", var.aks_cluster_name)[0] : var.aks_cluster_name
-}
-
 data "azurerm_kubernetes_cluster" "aks" {
-  name                = local.cluster_name
+  name                = var.aks_cluster_name
   resource_group_name = var.resource_group_name
 }
 
@@ -70,6 +66,7 @@ metadata:
 YAML
 }
 
+# Pull secret for Falcon Sensor
 resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -85,6 +82,7 @@ YAML
   depends_on = [kubectl_manifest.falcon_system_namespace]
 }
 
+# Pull secret for Falcon KAC
 resource "kubectl_manifest" "crowdstrike_pull_secret_kac" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -152,22 +150,6 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_tags
   }
 
-  # Fix Management = managed
-  set {
-    name  = "falcon-sensor.falcon.provisioning.enabled"
-    value = "true"
-  }
-
-  set {
-    name  = "falcon-sensor.falcon.client_id"
-    value = var.falcon_client_id
-  }
-
-  set_sensitive {
-    name  = "falcon-sensor.falcon.client_secret"
-    value = var.falcon_client_secret
-  }
-
   set {
     name  = "falcon-sensor.node.image.repository"
     value = "registry.crowdstrike.com/falcon-sensor/release/falcon-sensor"
@@ -230,6 +212,7 @@ resource "helm_release" "falcon_platform" {
   }
 
   # Falcon Image Analyzer Configuration
+  # Uses registryConfigJSON instead of pullSecrets
   set {
     name  = "falcon-image-analyzer.enabled"
     value = "true"
@@ -255,7 +238,6 @@ resource "helm_release" "falcon_platform" {
     value = "true"
   }
 
-  # Fix IAR = Yes
   set {
     name  = "falcon-image-analyzer.crowdstrikeConfig.cid"
     value = var.falcon_cid
@@ -273,23 +255,12 @@ resource "helm_release" "falcon_platform" {
 
   set {
     name  = "falcon-image-analyzer.crowdstrikeConfig.clusterName"
-    value = local.cluster_name
+    value = var.aks_cluster_name
   }
 
   set {
     name  = "falcon-image-analyzer.crowdstrikeConfig.cloud"
     value = var.falcon_cloud_region
-  }
-
-  # Enable assessment
-  set {
-    name  = "falcon-image-analyzer.crowdstrikeConfig.enableRuntimeDetection"
-    value = "true"
-  }
-
-  set {
-    name  = "falcon-image-analyzer.crowdstrikeConfig.agentRuntime"
-    value = "true"
   }
 
   set {
@@ -302,6 +273,7 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_iar_version
   }
 
+  # Key fix - use registryConfigJSON instead of pullSecrets
   set_sensitive {
     name  = "falcon-image-analyzer.image.registryConfigJSON"
     value = var.falcon_iar_pull_token
