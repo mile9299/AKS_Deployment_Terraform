@@ -277,7 +277,7 @@ resource "helm_release" "falcon_platform" {
 
   set {
     name  = "falcon-image-analyzer.image.repository"
-    value = "registry.crowdstrike.com/falcon-imageanalyzer/release/falcon-imageanalyzer"
+    value = "registry.crowdstrike.com/falcon-imageanalyzer/${var.falcon_cloud_region}/release/falcon-imageanalyzer"
   }
 
   set {
