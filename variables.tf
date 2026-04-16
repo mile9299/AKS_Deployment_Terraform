@@ -14,19 +14,25 @@ variable "azure_subscription_id" {
 }
 
 variable "falcon_client_id" {
-  description = "Falcon API Client ID (used for IAR only)"
+  description = "Falcon API Client ID"
   type        = string
   sensitive   = true
 }
 
 variable "falcon_client_secret" {
-  description = "Falcon API Client Secret (used for IAR only)"
+  description = "Falcon API Client Secret"
   type        = string
   sensitive   = true
 }
 
 variable "falcon_registry_pull_token" {
-  description = "CrowdStrike Registry Pull Token (base64 encoded .dockerconfigjson from falcon-container-sensor-pull.sh)"
+  description = "CrowdStrike Registry Pull Token for Sensor and KAC"
+  type        = string
+  sensitive   = true
+}
+
+variable "falcon_iar_pull_token" {
+  description = "CrowdStrike Registry Pull Token for IAR (from --type falcon-imageanalyzer)"
   type        = string
   sensitive   = true
 }
