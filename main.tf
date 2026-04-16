@@ -19,10 +19,7 @@ provider "azurerm" {
   features {}
 }
 
-# Extract cluster name from resource ID if full ID is provided
 locals {
-  # If aks_cluster_name contains "/" it's a full resource ID, extract the name
-  # Otherwise use it as-is
   cluster_name = can(regex(".*/(.+)$", var.aks_cluster_name)) ? regex(".*/(.+)$", var.aks_cluster_name)[0] : var.aks_cluster_name
 }
 
@@ -155,6 +152,22 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_tags
   }
 
+  # Fix Management = managed
+  set {
+    name  = "falcon-sensor.falcon.provisioning.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "falcon-sensor.falcon.client_id"
+    value = var.falcon_client_id
+  }
+
+  set_sensitive {
+    name  = "falcon-sensor.falcon.client_secret"
+    value = var.falcon_client_secret
+  }
+
   set {
     name  = "falcon-sensor.node.image.repository"
     value = "registry.crowdstrike.com/falcon-sensor/release/falcon-sensor"
@@ -242,6 +255,7 @@ resource "helm_release" "falcon_platform" {
     value = "true"
   }
 
+  # Fix IAR = Yes
   set {
     name  = "falcon-image-analyzer.crowdstrikeConfig.cid"
     value = var.falcon_cid
@@ -257,7 +271,6 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_client_secret
   }
 
-  # Use local.cluster_name to ensure clean name is used
   set {
     name  = "falcon-image-analyzer.crowdstrikeConfig.clusterName"
     value = local.cluster_name
@@ -266,6 +279,17 @@ resource "helm_release" "falcon_platform" {
   set {
     name  = "falcon-image-analyzer.crowdstrikeConfig.cloud"
     value = var.falcon_cloud_region
+  }
+
+  # Enable assessment
+  set {
+    name  = "falcon-image-analyzer.crowdstrikeConfig.enableRuntimeDetection"
+    value = "true"
+  }
+
+  set {
+    name  = "falcon-image-analyzer.crowdstrikeConfig.agentRuntime"
+    value = "true"
   }
 
   set {
