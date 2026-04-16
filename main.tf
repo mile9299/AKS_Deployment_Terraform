@@ -66,7 +66,6 @@ metadata:
 YAML
 }
 
-# Pull secret for Falcon Sensor - use token as-is (already base64)
 resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -82,7 +81,6 @@ YAML
   depends_on = [kubectl_manifest.falcon_system_namespace]
 }
 
-# Pull secret for Falcon KAC - use token as-is (already base64)
 resource "kubectl_manifest" "crowdstrike_pull_secret_kac" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -98,7 +96,6 @@ YAML
   depends_on = [kubectl_manifest.falcon_kac_namespace]
 }
 
-# Pull secret for Falcon IAR - use token as-is (already base64)
 resource "kubectl_manifest" "crowdstrike_pull_secret_iar" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -208,16 +205,6 @@ resource "helm_release" "falcon_platform" {
   }
 
   set {
-    name  = "falcon-kac.falcon.clientID"
-    value = var.falcon_client_id
-  }
-
-  set_sensitive {
-    name  = "falcon-kac.falcon.clientSecret"
-    value = var.falcon_client_secret
-  }
-
-  set {
     name  = "falcon-kac.falcon.cloud"
     value = var.falcon_cloud_region
   }
@@ -290,7 +277,7 @@ resource "helm_release" "falcon_platform" {
 
   set {
     name  = "falcon-image-analyzer.image.repository"
-    value = "registry.crowdstrike.com/falcon-imageanalyzer/us-1/release/falcon-imageanalyzer"
+    value = "registry.crowdstrike.com/falcon-imageanalyzer/release/falcon-imageanalyzer"
   }
 
   set {
