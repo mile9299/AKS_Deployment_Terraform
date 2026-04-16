@@ -55,7 +55,7 @@ variable "falcon_cloud_region" {
 }
 
 variable "falcon_platform_version" {
-  description = "Falcon Platform Helm chart version"
+  description = "Falcon Platform Helm chart version (leave empty for latest)"
   type        = string
   default     = ""
 }
