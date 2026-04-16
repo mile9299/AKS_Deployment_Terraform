@@ -14,19 +14,25 @@ variable "azure_subscription_id" {
 }
 
 variable "falcon_client_id" {
-  description = "Falcon API Client ID - used for IAR registry auth and IAR config"
+  description = "Falcon API Client ID"
   type        = string
   sensitive   = true
 }
 
 variable "falcon_client_secret" {
-  description = "Falcon API Client Secret - used for IAR registry auth and IAR config"
+  description = "Falcon API Client Secret"
   type        = string
   sensitive   = true
 }
 
 variable "falcon_registry_pull_token" {
   description = "CrowdStrike Registry Pull Token for Sensor and KAC"
+  type        = string
+  sensitive   = true
+}
+
+variable "falcon_iar_pull_token" {
+  description = "CrowdStrike Registry Pull Token for IAR (registryConfigJSON)"
   type        = string
   sensitive   = true
 }
@@ -43,7 +49,7 @@ variable "falcon_cloud_region" {
 }
 
 variable "falcon_platform_version" {
-  description = "Falcon Platform Helm chart version (leave empty for latest)"
+  description = "Falcon Platform Helm chart version"
   type        = string
   default     = ""
 }
@@ -67,7 +73,7 @@ variable "falcon_iar_version" {
 }
 
 variable "falcon_tags" {
-  description = "Tags to apply to Falcon sensor (comma-separated)"
+  description = "Tags to apply to Falcon sensor"
   type        = string
   default     = ""
 }
