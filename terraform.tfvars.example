@@ -3,11 +3,10 @@ aks_cluster_name         = "TedsAKS-9"
 azure_subscription_id    = ""
 
 # Falcon API Credentials
-falcon_client_id         = "your-api-client-id"
-falcon_client_secret     = "your-api-client-secret"
+falcon_client_id         = ""
+falcon_client_secret     = ""
 
-# Registry Pull Token (base64 encoded - same for all components)
-# Sensor uses it as-is (base64), KAC and IAR use it decoded
+# Registry Pull Token (use the output from the script directly)
 falcon_registry_pull_token = ""
 
 # Falcon Configuration
