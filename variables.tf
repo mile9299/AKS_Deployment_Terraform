@@ -14,19 +14,19 @@ variable "azure_subscription_id" {
 }
 
 variable "falcon_client_id" {
-  description = "Falcon API Client ID"
+  description = "Falcon API Client ID (used for IAR only)"
   type        = string
   sensitive   = true
 }
 
 variable "falcon_client_secret" {
-  description = "Falcon API Client Secret"
+  description = "Falcon API Client Secret (used for IAR only)"
   type        = string
   sensitive   = true
 }
 
 variable "falcon_registry_pull_token" {
-  description = "CrowdStrike Registry Pull Token (base64 encoded .dockerconfigjson) - same token used for all components"
+  description = "CrowdStrike Registry Pull Token (base64 encoded .dockerconfigjson from falcon-container-sensor-pull.sh)"
   type        = string
   sensitive   = true
 }
@@ -43,7 +43,7 @@ variable "falcon_cloud_region" {
 }
 
 variable "falcon_platform_version" {
-  description = "Falcon Platform Helm chart version"
+  description = "Falcon Platform Helm chart version (leave empty for latest)"
   type        = string
   default     = ""
 }
