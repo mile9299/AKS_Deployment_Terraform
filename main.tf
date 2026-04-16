@@ -105,7 +105,7 @@ metadata:
   namespace: falcon-image-analyzer
 type: kubernetes.io/dockerconfigjson
 data:
-  .dockerconfigjson: ${var.falcon_registry_pull_token}
+  .dockerconfigjson: ${var.falcon_iar_pull_token}
 YAML
 
   depends_on = [kubectl_manifest.falcon_image_analyzer_namespace]
@@ -224,7 +224,7 @@ resource "helm_release" "falcon_platform" {
     value = "crowdstrike-pull-secret"
   }
 
-  # Falcon Image Analyzer Configuration
+  # Falcon Image Analyzer Configuration - Minimal like KAC
   set {
     name  = "falcon-image-analyzer.enabled"
     value = "true"
@@ -253,16 +253,6 @@ resource "helm_release" "falcon_platform" {
   set {
     name  = "falcon-image-analyzer.crowdstrikeConfig.cid"
     value = var.falcon_cid
-  }
-
-  set {
-    name  = "falcon-image-analyzer.crowdstrikeConfig.clientID"
-    value = var.falcon_client_id
-  }
-
-  set_sensitive {
-    name  = "falcon-image-analyzer.crowdstrikeConfig.clientSecret"
-    value = var.falcon_client_secret
   }
 
   set {
