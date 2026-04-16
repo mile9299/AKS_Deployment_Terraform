@@ -123,8 +123,28 @@ resource "helm_release" "falcon_platform" {
   wait             = true
 
   set {
+    name  = "nameOverride"
+    value = ""
+  }
+
+  set {
+    name  = "fullnameOverride"
+    value = ""
+  }
+
+  set {
     name  = "falcon-sensor.enabled"
     value = "true"
+  }
+
+  set {
+    name  = "falcon-sensor.nameOverride"
+    value = "falcon-sensor"
+  }
+
+  set {
+    name  = "falcon-sensor.fullnameOverride"
+    value = "falcon-sensor"
   }
 
   set {
@@ -155,6 +175,16 @@ resource "helm_release" "falcon_platform" {
   set {
     name  = "falcon-kac.enabled"
     value = "true"
+  }
+
+  set {
+    name  = "falcon-kac.nameOverride"
+    value = "falcon-kac"
+  }
+
+  set {
+    name  = "falcon-kac.fullnameOverride"
+    value = "falcon-kac"
   }
 
   set {
@@ -195,6 +225,16 @@ resource "helm_release" "falcon_platform" {
   set {
     name  = "falcon-image-analyzer.enabled"
     value = "true"
+  }
+
+  set {
+    name  = "falcon-image-analyzer.nameOverride"
+    value = "falcon-image-analyzer"
+  }
+
+  set {
+    name  = "falcon-image-analyzer.fullnameOverride"
+    value = "falcon-image-analyzer"
   }
 
   set {
