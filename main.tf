@@ -66,6 +66,7 @@ metadata:
 YAML
 }
 
+# Pull secret for Falcon Sensor - uses pull token
 resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -81,6 +82,7 @@ YAML
   depends_on = [kubectl_manifest.falcon_system_namespace]
 }
 
+# Pull secret for Falcon KAC - uses pull token
 resource "kubectl_manifest" "crowdstrike_pull_secret_kac" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -96,6 +98,7 @@ YAML
   depends_on = [kubectl_manifest.falcon_kac_namespace]
 }
 
+# Pull secret for Falcon IAR - uses Client ID and Secret directly
 resource "kubectl_manifest" "crowdstrike_pull_secret_iar" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -105,7 +108,15 @@ metadata:
   namespace: falcon-image-analyzer
 type: kubernetes.io/dockerconfigjson
 data:
-  .dockerconfigjson: ${var.falcon_iar_pull_token}
+  .dockerconfigjson: ${base64encode(jsonencode({
+    auths = {
+      "registry.crowdstrike.com" = {
+        username = var.falcon_client_id
+        password = var.falcon_client_secret
+        auth     = base64encode("${var.falcon_client_id}:${var.falcon_client_secret}")
+      }
+    }
+  }))}
 YAML
 
   depends_on = [kubectl_manifest.falcon_image_analyzer_namespace]
