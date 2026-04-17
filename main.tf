@@ -107,9 +107,7 @@ resource "helm_release" "falcon_platform" {
     value = ""
   }
 
-  # -----------------------------------------------
   # Falcon Sensor Configuration
-  # -----------------------------------------------
   set {
     name  = "falcon-sensor.enabled"
     value = "true"
@@ -130,9 +128,10 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_cid
   }
 
+  # Changed from kernel to bpf for AKS Ubuntu 22.04 + newer kernels
   set {
     name  = "falcon-sensor.node.backend"
-    value = "kernel"
+    value = "bpf"
   }
 
   set {
@@ -155,9 +154,7 @@ resource "helm_release" "falcon_platform" {
     value = "crowdstrike-pull-secret"
   }
 
-  # -----------------------------------------------
   # Falcon KAC Configuration
-  # -----------------------------------------------
   set {
     name  = "falcon-kac.enabled"
     value = "true"
@@ -203,15 +200,22 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_kac_pull_token
   }
 
-  # Full Azure Resource ID for Managed + Environment=Azure
   set {
     name  = "falcon-kac.clusterName"
     value = local.cluster_resource_id
   }
 
-  # -----------------------------------------------
+  set {
+    name  = "falcon-kac.azure.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "falcon-kac.azure.subscriptionID"
+    value = var.azure_subscription_id
+  }
+
   # Falcon Image Analyzer Configuration
-  # -----------------------------------------------
   set {
     name  = "falcon-image-analyzer.enabled"
     value = "true"
@@ -252,7 +256,6 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_client_secret
   }
 
-  # Full Azure Resource ID for IAR cluster identification
   set {
     name  = "falcon-image-analyzer.crowdstrikeConfig.clusterName"
     value = local.cluster_resource_id
