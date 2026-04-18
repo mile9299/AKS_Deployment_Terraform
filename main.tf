@@ -20,8 +20,14 @@ provider "azurerm" {
 }
 
 locals {
-  cluster_name        = can(regex(".*/(.+)$", var.aks_cluster_name)) ? regex(".*/(.+)$", var.aks_cluster_name)[0] : var.aks_cluster_name
-  cluster_resource_id = data.azurerm_kubernetes_cluster.aks.id
+  cluster_name = can(regex(".*/(.+)$", var.aks_cluster_name)) ? regex(".*/(.+)$", var.aks_cluster_name)[0] : var.aks_cluster_name
+
+  # Exact format Falcon API expects for AKS clusters
+  # resourcegroups = lowercase
+  # Microsoft.ContainerService = mixed case
+  # managedClusters = mixed case
+  # resource group name and cluster name = original case
+  cluster_resource_id_falcon = "/subscriptions/${var.azure_subscription_id}/resourcegroups/${var.resource_group_name}/providers/Microsoft.ContainerService/managedClusters/${local.cluster_name}"
 }
 
 data "azurerm_kubernetes_cluster" "aks" {
@@ -128,7 +134,6 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_cid
   }
 
-  # Changed from kernel to bpf for AKS Ubuntu 22.04 + newer kernels
   set {
     name  = "falcon-sensor.node.backend"
     value = "bpf"
@@ -200,9 +205,10 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_kac_pull_token
   }
 
+  # Exact Falcon API format for AKS cluster name
   set {
     name  = "falcon-kac.clusterName"
-    value = local.cluster_resource_id
+    value = local.cluster_resource_id_falcon
   }
 
   set {
@@ -256,9 +262,10 @@ resource "helm_release" "falcon_platform" {
     value = var.falcon_client_secret
   }
 
+  # Exact Falcon API format for IAR cluster name
   set {
     name  = "falcon-image-analyzer.crowdstrikeConfig.clusterName"
-    value = local.cluster_resource_id
+    value = local.cluster_resource_id_falcon
   }
 
   set {
