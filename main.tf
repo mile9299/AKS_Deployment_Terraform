@@ -22,7 +22,7 @@ provider "azurerm" {
 locals {
   cluster_name = can(regex(".*/(.+)$", var.aks_cluster_name)) ? regex(".*/(.+)$", var.aks_cluster_name)[0] : var.aks_cluster_name
 
-  # Exact format Falcon API expects for AKS
+  # Used for IAR only
   cluster_resource_id_falcon = "/subscriptions/${var.azure_subscription_id}/resourcegroups/${var.resource_group_name}/providers/Microsoft.ContainerService/managedClusters/${local.cluster_name}"
 }
 
@@ -46,9 +46,6 @@ provider "helm" {
   }
 }
 
-# -----------------------------------------------
-# Namespaces
-# -----------------------------------------------
 resource "kubectl_manifest" "falcon_system_namespace" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -76,9 +73,6 @@ metadata:
 YAML
 }
 
-# -----------------------------------------------
-# Falcon Sensor - Separate Helm Release
-# -----------------------------------------------
 resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -94,6 +88,9 @@ YAML
   depends_on = [kubectl_manifest.falcon_system_namespace]
 }
 
+# -----------------------------------------------
+# Falcon Sensor - DaemonSet in falcon-system
+# -----------------------------------------------
 resource "helm_release" "falcon_sensor" {
   name             = "falcon-sensor"
   repository       = "https://crowdstrike.github.io/falcon-helm"
@@ -108,6 +105,7 @@ resource "helm_release" "falcon_sensor" {
     value = var.falcon_cid
   }
 
+  # BPF backend required for Ubuntu 22.04 + kernel 5.15+
   set {
     name  = "node.backend"
     value = "bpf"
@@ -140,7 +138,7 @@ resource "helm_release" "falcon_sensor" {
 }
 
 # -----------------------------------------------
-# Falcon KAC - Separate Helm Release
+# Falcon KAC - Auto-discovers cluster name from Azure IMDS
 # -----------------------------------------------
 resource "helm_release" "falcon_kac" {
   name             = "falcon-kac"
@@ -176,11 +174,8 @@ resource "helm_release" "falcon_kac" {
     value = var.falcon_kac_pull_token
   }
 
-  # Azure Resource ID as cluster name
-  set {
-    name  = "clusterName"
-    value = local.cluster_resource_id_falcon
-  }
+  # No clusterName - KAC auto-discovers from Azure IMDS
+  # This populates DiscoveredClusterName and sets Environment=Azure
 
   set {
     name  = "azure.enabled"
@@ -198,7 +193,7 @@ resource "helm_release" "falcon_kac" {
 }
 
 # -----------------------------------------------
-# Falcon IAR - Separate Helm Release
+# Falcon IAR - in falcon-image-analyzer namespace
 # -----------------------------------------------
 resource "helm_release" "falcon_iar" {
   name             = "falcon-imageanalyzer"
