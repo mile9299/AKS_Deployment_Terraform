@@ -137,6 +137,7 @@ resource "helm_release" "falcon_sensor" {
 
 # -----------------------------------------------
 # Falcon KAC - in falcon-kac namespace
+# Removed falcon.cloudProvider - not valid falconctl option
 # -----------------------------------------------
 resource "helm_release" "falcon_kac" {
   name             = "falcon-kac"
@@ -155,12 +156,6 @@ resource "helm_release" "falcon_kac" {
   set {
     name  = "falcon.cloud"
     value = var.falcon_cloud_region
-  }
-
-  # Set cloud provider under falcon namespace
-  set {
-    name  = "falcon.cloudProvider"
-    value = "azure"
   }
 
   set {
