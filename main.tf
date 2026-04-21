@@ -23,6 +23,10 @@ locals {
   cluster_name = can(regex(".*/(.+)$", var.aks_cluster_name)) ? regex(".*/(.+)$", var.aks_cluster_name)[0] : var.aks_cluster_name
 
   # Exact format Falcon API expects for AKS clusters
+  # resourcegroups = lowercase
+  # Microsoft.ContainerService = mixed case
+  # managedClusters = mixed case
+  # Resource group name and cluster name = original case
   cluster_resource_id_falcon = "/subscriptions/${var.azure_subscription_id}/resourcegroups/${var.resource_group_name}/providers/Microsoft.ContainerService/managedClusters/${local.cluster_name}"
 }
 
@@ -46,6 +50,9 @@ provider "helm" {
   }
 }
 
+# -----------------------------------------------
+# Namespaces
+# -----------------------------------------------
 resource "kubectl_manifest" "falcon_system_namespace" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -73,6 +80,9 @@ metadata:
 YAML
 }
 
+# -----------------------------------------------
+# Falcon Sensor Pull Secret
+# -----------------------------------------------
 resource "kubectl_manifest" "crowdstrike_pull_secret_system" {
   yaml_body = <<-YAML
 apiVersion: v1
@@ -139,7 +149,7 @@ resource "helm_release" "falcon_sensor" {
 
 # -----------------------------------------------
 # Falcon KAC - in falcon-kac namespace
-# This is always AKS so Environment = Azure
+# Always AKS so cloudProvider = azure
 # -----------------------------------------------
 resource "helm_release" "falcon_kac" {
   name             = "falcon-kac"
@@ -181,7 +191,13 @@ resource "helm_release" "falcon_kac" {
     value = local.cluster_resource_id_falcon
   }
 
-  # Always Azure for AKS
+  # Set cloud provider to azure - drives Environment = Azure
+  set {
+    name  = "cloudProvider"
+    value = "azure"
+  }
+
+  # Azure settings
   set {
     name  = "azure.enabled"
     value = "true"
@@ -192,16 +208,10 @@ resource "helm_release" "falcon_kac" {
     value = var.azure_subscription_id
   }
 
-  # Always Azure for AKS - location auto-detected from AKS cluster
+  # Location auto-detected from AKS cluster
   set {
     name  = "azure.location"
     value = data.azurerm_kubernetes_cluster.aks.location
-  }
-
-  # Always Azure for AKS - cluster type
-  set {
-    name  = "azure.clusterType"
-    value = "aks"
   }
 
   depends_on = [
@@ -236,6 +246,7 @@ resource "helm_release" "falcon_iar" {
     value = var.falcon_client_secret
   }
 
+  # Full Azure Resource ID in Falcon format
   set {
     name  = "crowdstrikeConfig.clusterName"
     value = local.cluster_resource_id_falcon
