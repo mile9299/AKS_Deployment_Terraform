@@ -1,5 +1,5 @@
-resource_group_name        = "TedsAKS_group"
-aks_cluster_name           = "TedsAKS-10"
+resource_group_name        = ""
+aks_cluster_name           = ""
 azure_subscription_id      = ""
 
 # Falcon API Credentials
