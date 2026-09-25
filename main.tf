@@ -110,11 +110,6 @@ resource "helm_release" "falcon_sensor" {
   }
 
   set {
-    name  = "falcon.tags"
-    value = var.falcon_tags
-  }
-
-  set {
     name  = "node.image.repository"
     value = "registry.crowdstrike.com/falcon-sensor/release/falcon-sensor"
   }
